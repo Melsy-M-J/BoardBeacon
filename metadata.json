@@ -1,5 +1,5 @@
 {
-  "name": "AI Board Game Arena",
+  "name": "BoardBeacon",
   "description": "A modern, interactive platform to play classic board games against a powerful Gemini-powered AI opponent. Challenge the AI in games like Tic-Tac-Toe, Memory Game, and more to come!",
   "requestFramePermissions": []
 }
