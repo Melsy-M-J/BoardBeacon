@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ setView }) => {
                 <div className="flex items-center justify-between h-16">
                     <div className="flex-shrink-0">
                         <button onClick={() => handleNav('lobby')} className="text-brand-accent font-bold text-xl tracking-wider">
-                           AI Game Arena
+                           BoardBeacon
                         </button>
                     </div>
                     {/* Desktop Menu */}
