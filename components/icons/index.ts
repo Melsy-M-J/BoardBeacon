@@ -1,0 +1,12 @@
+export { default as CheckersIcon } from './CheckersIcon';
+export { default as ChessIcon } from './ChessIcon';
+export { default as LudoIcon } from './LudoIcon';
+export { default as MemoryGameIcon } from './MemoryGameIcon';
+export { default as SnakeAndLadderIcon } from './SnakeAndLadderIcon';
+export { default as TicTacToeIcon } from './TicTacToeIcon';
+export { default as SudokuIcon } from './SudokuIcon';
+export { default as GoldTrophyIcon } from './GoldTrophyIcon';
+export { default as SilverTrophyIcon } from './SilverTrophyIcon';
+export { default as BronzeTrophyIcon } from './BronzeTrophyIcon';
+export { default as SoundOnIcon } from './SoundOnIcon';
+export { default as SoundOffIcon } from './SoundOffIcon';
