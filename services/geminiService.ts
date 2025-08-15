@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, GenerateContentResponse, Schema } from "@google/genai";
 
 const API_KEY = process.env.API_KEY;
@@ -11,6 +12,7 @@ if (!API_KEY) {
 const ai = new GoogleGenAI({ apiKey: API_KEY! });
 
 export const getAiResponse = async (prompt: string, schema: Schema): Promise<any> => {
+    let jsonString: string | undefined;
     try {
         const response: GenerateContentResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -18,13 +20,11 @@ export const getAiResponse = async (prompt: string, schema: Schema): Promise<any
             config: {
                 responseMimeType: "application/json",
                 responseSchema: schema,
-                temperature: 1.0,
-                topP: 0.95,
+                temperature: 0.3, // Lowered for more deterministic JSON
             },
         });
 
-        // The .text property directly gives the stringified JSON
-        const jsonString = response.text;
+        jsonString = response.text;
         
         if (!jsonString) {
             throw new Error("Received empty response from AI.");
@@ -34,7 +34,12 @@ export const getAiResponse = async (prompt: string, schema: Schema): Promise<any
         return JSON.parse(jsonString);
 
     } catch (error) {
-        console.error("Error fetching AI response:", error);
+        // If parsing fails, log the malformed string for easier debugging
+        if (error instanceof SyntaxError && jsonString) {
+             console.error("Failed to parse AI response as JSON. Response text:", jsonString);
+        } else {
+            console.error("Error fetching AI response:", error);
+        }
         // Fallback or re-throw, depending on desired behavior
         throw new Error("Failed to get a valid move from the AI.");
     }
