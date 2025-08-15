@@ -131,22 +131,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateUserStats = (gameId: GameId, result: 'win' | 'loss' | 'draw', timePlayed: number) => {
         if (!user) return;
 
-        const updatedUser = { ...user, stats: { ...user.stats }, gameHistory: [...user.gameHistory] };
-        const gameStats = { ...updatedUser.stats[gameId] };
+        // Create a new stats object for the specific game, handling all updates immutably
+        const newGameStats = {
+            ...user.stats[gameId],
+            wins: user.stats[gameId].wins + (result === 'win' ? 1 : 0),
+            losses: user.stats[gameId].losses + (result === 'loss' ? 1 : 0),
+            draws: user.stats[gameId].draws + (result === 'draw' ? 1 : 0),
+            timePlayed: user.stats[gameId].timePlayed + timePlayed,
+        };
 
-        if (result === 'win') gameStats.wins += 1;
-        else if (result === 'loss') gameStats.losses += 1;
-        else if (result === 'draw') gameStats.draws += 1;
-        gameStats.timePlayed += timePlayed;
+        // Create a new history entry
+        const newHistoryEntry: GameHistoryEntry = {
+            gameId,
+            result,
+            timePlayed,
+            date: new Date().toISOString(),
+        };
         
-        updatedUser.stats[gameId] = gameStats;
-        
-        const historyEntry: GameHistoryEntry = { gameId, result, timePlayed, date: new Date().toISOString() };
-        updatedUser.gameHistory.push(historyEntry);
+        // Create a new saved games object, removing the completed game if it exists
+        const { [gameId]: _, ...newSavedGames } = user.savedGames || {};
 
-        if (updatedUser.savedGames?.[gameId]) {
-            delete updatedUser.savedGames[gameId];
-        }
+        const updatedUser: User = {
+            ...user,
+            stats: {
+                ...user.stats,
+                [gameId]: newGameStats,
+            },
+            gameHistory: [...user.gameHistory, newHistoryEntry],
+            savedGames: newSavedGames,
+        };
         
         updateUserInDb(updatedUser);
     };
@@ -174,8 +187,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const clearSavedGame = (gameId: GameId) => {
         if (!user || !user.savedGames?.[gameId]) return;
-        const updatedUser = { ...user };
-        delete updatedUser.savedGames[gameId];
+
+        // Immutably remove the gameId property from savedGames
+        const { [gameId]: _, ...newSavedGames } = user.savedGames;
+
+        const updatedUser = {
+            ...user,
+            savedGames: newSavedGames,
+        };
+        
         updateUserInDb(updatedUser);
     };
 

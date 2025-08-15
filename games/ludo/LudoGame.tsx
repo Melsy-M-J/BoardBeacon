@@ -179,7 +179,7 @@ const LudoGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) => 
         if (turn !== 'red' || winner) return;
         setMessage("AI is rolling...");
         setIsRolling(true);
-        await new Promise(res => setTimeout(res, 1000));
+        await new Promise(res => setTimeout(res, 500));
         const roll = Math.floor(Math.random() * 6) + 1;
         setDiceValue(roll);
         setIsRolling(false);
@@ -187,7 +187,7 @@ const LudoGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) => 
         const validMoves = getValidMoves('red', roll, gameState);
         if (validMoves.length === 0) {
             setMessage("AI has no moves. Your turn.");
-            setTimeout(() => { setTurn('green'); setDiceValue(null); }, 1500);
+            setTimeout(() => { setTurn('green'); setDiceValue(null); }, 1000);
             return;
         }
         
@@ -204,7 +204,7 @@ const LudoGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) => 
         try {
             const res = await getAiResponse(prompt, schema);
             const chosenIndex = validMoves.includes(res.pieceIndex) ? res.pieceIndex : validMoves[0];
-            await new Promise(res => setTimeout(res, 500));
+            await new Promise(res => setTimeout(res, 200));
             applyMove('red', chosenIndex, roll);
         } catch(e) {
             console.error("AI Error, making random move", e);
@@ -214,7 +214,7 @@ const LudoGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) => 
 
     useEffect(() => {
         if (isGameReady && turn === 'red' && !winner && diceValue === null) {
-            const timer = setTimeout(handleAiTurn, 1000);
+            const timer = setTimeout(handleAiTurn, 500);
             return () => clearTimeout(timer);
         }
     }, [isGameReady, turn, winner, diceValue, handleAiTurn]);

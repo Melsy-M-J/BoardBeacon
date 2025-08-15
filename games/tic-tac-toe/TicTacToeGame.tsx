@@ -100,7 +100,7 @@ const TicTacToeGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }
 
     useEffect(() => {
         if (isGameReady && currentPlayer === 'X' && status === 'playing') {
-            const timer = setTimeout(() => handleAiMove(board), 500);
+            const timer = setTimeout(() => handleAiMove(board), 200);
             return () => clearTimeout(timer);
         }
     }, [isGameReady, currentPlayer, status, board, handleAiMove]);

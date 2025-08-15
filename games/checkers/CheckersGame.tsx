@@ -177,7 +177,7 @@ const CheckersGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName })
 
     useEffect(() => {
         if (isGameReady && turn === 'black' && !winner) {
-            const timer = setTimeout(handleAiMove, 1000);
+            const timer = setTimeout(handleAiMove, 300);
             return () => clearTimeout(timer);
         }
     }, [isGameReady, turn, winner, handleAiMove]);

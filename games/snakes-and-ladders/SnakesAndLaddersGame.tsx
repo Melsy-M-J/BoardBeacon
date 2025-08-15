@@ -177,12 +177,12 @@ const SnakesAndLaddersGame: React.FC<GameComponentProps> = ({ onBackToLobby, gam
             setIsRolling(false);
             setMessage(`AI rolled a ${roll}!`);
             setTimeout(() => movePlayer('ai', roll), 500);
-        }, 1500);
+        }, 500);
     }, [turn, winner, isRolling, movePlayer]);
 
     useEffect(() => {
         if (isGameReady && turn === 'ai' && !winner) {
-            const timer = setTimeout(handleAiTurn, 1000);
+            const timer = setTimeout(handleAiTurn, 500);
             return () => clearTimeout(timer);
         } else if (turn === 'player' && !winner) {
             setMessage('Your turn to roll!');

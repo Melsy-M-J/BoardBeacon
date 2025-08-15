@@ -115,7 +115,7 @@ Respond with a JSON object containing your chosen move in the "move" field.`;
 
     useEffect(() => {
         if (isGameReady && gameRef.current.turn() === 'b' && !gameRef.current.isGameOver()) {
-            const timer = setTimeout(handleAiMove, 1000);
+            const timer = setTimeout(handleAiMove, 300);
             return () => clearTimeout(timer);
         }
     }, [isGameReady, handleAiMove, board]);
