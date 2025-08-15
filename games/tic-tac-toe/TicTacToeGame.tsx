@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext, useRef, useMemo } from 'react';
 import { GameComponentProps } from '../../types';
 import { getAiResponse } from '../../services/geminiService';
 import { AuthContext } from '../../contexts/AuthContext';
+import ContinueGameModal from '../../components/ContinueGameModal';
 import { Type } from '@google/genai';
 
 type Player = 'O' | 'X';
@@ -10,7 +11,7 @@ type Board = Cell[][];
 type GameStatus = 'playing' | 'draw' | 'winner';
 
 const TicTacToeGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) => {
-    const { user, updateUserStats } = useContext(AuthContext);
+    const { user, updateUserStats, saveGame, clearSavedGame } = useContext(AuthContext);
     const startTimeRef = useRef<number>(Date.now());
     
     const createEmptyBoard = (): Board => Array(3).fill(null).map(() => Array(3).fill(null));
@@ -20,6 +21,18 @@ const TicTacToeGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }
     const [status, setStatus] = useState<GameStatus>('playing');
     const [winner, setWinner] = useState<Player | null>(null);
     const [aiIsThinking, setAiIsThinking] = useState<boolean>(false);
+    const [showContinueModal, setShowContinueModal] = useState(false);
+    const [isGameReady, setIsGameReady] = useState(false);
+    
+    const savedStateJSON = useMemo(() => user?.savedGames?.['tic-tac-toe'], [user]);
+
+    useEffect(() => {
+        if (user && savedStateJSON) {
+            setShowContinueModal(true);
+        } else {
+            setIsGameReady(true);
+        }
+    }, [user, savedStateJSON]);
 
     const checkWinner = useCallback((currentBoard: Board): { winner: Player | null, status: GameStatus } => {
         const lines = [ // Rows, Columns, Diagonals
@@ -86,11 +99,11 @@ const TicTacToeGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }
     }, [checkWinner]);
 
     useEffect(() => {
-        if (currentPlayer === 'X' && status === 'playing') {
+        if (isGameReady && currentPlayer === 'X' && status === 'playing') {
             const timer = setTimeout(() => handleAiMove(board), 500);
             return () => clearTimeout(timer);
         }
-    }, [currentPlayer, status, board, handleAiMove]);
+    }, [isGameReady, currentPlayer, status, board, handleAiMove]);
 
     const handleReset = () => {
         setBoard(createEmptyBoard());
@@ -100,6 +113,42 @@ const TicTacToeGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }
         setAiIsThinking(false);
         startTimeRef.current = Date.now();
     };
+
+    const handleContinueGame = () => {
+        if (savedStateJSON) {
+            const savedState = JSON.parse(savedStateJSON);
+            setBoard(savedState.board);
+            setCurrentPlayer(savedState.currentPlayer);
+            setStatus(savedState.status);
+            setWinner(savedState.winner);
+            const timePlayedSoFar = savedState.timePlayed || 0;
+            startTimeRef.current = Date.now() - timePlayedSoFar * 1000;
+        }
+        setShowContinueModal(false);
+        setIsGameReady(true);
+    };
+
+    const handleStartNewGame = () => {
+        clearSavedGame('tic-tac-toe');
+        handleReset();
+        setShowContinueModal(false);
+        setIsGameReady(true);
+    };
+
+    const handleSaveAndExit = () => {
+        if (user && status === 'playing') {
+            const timePlayed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            const gameState = JSON.stringify({
+                board,
+                currentPlayer,
+                status,
+                winner,
+                timePlayed,
+            });
+            saveGame('tic-tac-toe', gameState);
+        }
+        onBackToLobby();
+    };
     
     const getStatusMessage = () => {
         if (status === 'winner') return winner === 'O' ? "Congratulations, you win!" : "AI wins!";
@@ -107,12 +156,30 @@ const TicTacToeGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }
         if (aiIsThinking) return "AI is thinking...";
         return `Your turn (O)`;
     };
+    
+    if (!isGameReady && user) {
+        return (
+            <div className="w-full max-w-lg mx-auto flex items-center justify-center h-96">
+                <ContinueGameModal 
+                    isOpen={showContinueModal}
+                    onContinue={handleContinueGame}
+                    onStartNew={handleStartNewGame}
+                    title="Unfinished Game Found"
+                    message="Would you like to continue your saved game of Tic-Tac-Toe?"
+                />
+                 {!showContinueModal && <p className="text-brand-light">Loading game...</p>}
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-lg mx-auto bg-brand-primary p-6 rounded-lg shadow-2xl animate-fade-in">
-             <div className="flex justify-between items-center mb-6">
+             <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
                 <h2 className="text-3xl font-bold text-brand-light">{gameName}</h2>
-                <button onClick={onBackToLobby} className="text-sm text-brand-accent hover:underline">Back to Lobby</button>
+                <div>
+                    {user && <button onClick={handleSaveAndExit} className="text-sm bg-brand-secondary text-brand-light hover:bg-brand-accent hover:text-brand-primary font-medium py-1 px-3 rounded-md transition-colors duration-300 mr-2">Save & Exit</button>}
+                    <button onClick={onBackToLobby} className="text-sm text-brand-accent hover:underline">Back to Lobby</button>
+                </div>
             </div>
             <div className="aspect-square grid grid-cols-3 gap-2 sm:gap-4 mb-4">
                 {board.map((row, rowIndex) => row.map((cell, colIndex) => (

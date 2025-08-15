@@ -4,6 +4,7 @@ import GameLobby from './components/GameLobby';
 import TicTacToeGame from './games/tic-tac-toe/TicTacToeGame';
 import MemoryGame from './games/memory-game/MemoryGame';
 import SudokuGame from './games/sudoku/SudokuGame';
+import ChessGame from './games/chess/ChessGame';
 import ComingSoonGame from './games/ComingSoonGame';
 import Header from './components/Header';
 import ProfilePage from './components/ProfilePage';
@@ -43,7 +44,7 @@ const App: React.FC = () => {
         { id: 'tic-tac-toe', name: 'Tic-Tac-Toe', description: 'Classic 3x3 grid game. Outsmart the AI to get three in a row.', component: TicTacToeGame, icon: TicTacToeIcon },
         { id: 'memory-game', name: 'Memory Game', description: 'Test your memory by finding all the matching pairs of cards.', component: MemoryGame, icon: MemoryGameIcon },
         { id: 'sudoku', name: 'Sudoku', description: 'A logic-based number-placement puzzle. Powered by Gemini.', component: SudokuGame, icon: SudokuIcon },
-        { id: 'chess', name: 'Chess', description: 'The ultimate strategy game. Checkmate the AI king.', component: ComingSoonGame, icon: ChessIcon, isComingSoon: true },
+        { id: 'chess', name: 'Chess', description: 'The ultimate strategy game. Checkmate the AI king.', component: ChessGame, icon: ChessIcon },
         { id: 'checkers', name: 'Checkers', description: "Capture all of your opponent's pieces to win.", component: ComingSoonGame, icon: CheckersIcon, isComingSoon: true },
         { id: 'ludo', name: 'Ludo', description: 'A classic race-to-the-finish dice game for all ages.', component: ComingSoonGame, icon: LudoIcon, isComingSoon: true },
         { id: 'snake-and-ladder', name: 'Snakes & Ladders', description: 'Climb ladders and avoid snakes in this game of luck.', component: ComingSoonGame, icon: SnakeAndLadderIcon, isComingSoon: true }

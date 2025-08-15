@@ -1,0 +1,12 @@
+export { default as BlackBishopIcon } from './BlackBishopIcon';
+export { default as BlackKingIcon } from './BlackKingIcon';
+export { default as BlackKnightIcon } from './BlackKnightIcon';
+export { default as BlackPawnIcon } from './BlackPawnIcon';
+export { default as BlackQueenIcon } from './BlackQueenIcon';
+export { default as BlackRookIcon } from './BlackRookIcon';
+export { default as WhiteBishopIcon } from './WhiteBishopIcon';
+export { default as WhiteKingIcon } from './WhiteKingIcon';
+export { default as WhiteKnightIcon } from './WhiteKnightIcon';
+export { default as WhitePawnIcon } from './WhitePawnIcon';
+export { default as WhiteQueenIcon } from './WhiteQueenIcon';
+export { default as WhiteRookIcon } from './WhiteRookIcon';

@@ -10,3 +10,6 @@ export { default as SilverTrophyIcon } from './SilverTrophyIcon';
 export { default as BronzeTrophyIcon } from './BronzeTrophyIcon';
 export { default as SoundOnIcon } from './SoundOnIcon';
 export { default as SoundOffIcon } from './SoundOffIcon';
+export { default as EditIcon } from './EditIcon';
+export { default as HamburgerIcon } from './HamburgerIcon';
+export { default as CloseIcon } from './CloseIcon';

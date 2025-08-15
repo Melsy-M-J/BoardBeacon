@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useContext } from 'react';
 import { GameComponentProps } from '../../types';
 import { AuthContext } from '../../contexts/AuthContext';
+import ContinueGameModal from '../../components/ContinueGameModal';
 
 const EMOJIS = ['🧠', '🕹️', '🎲', '🧩', '🃏', '👑', '🚀', '⭐'];
 
@@ -21,20 +22,30 @@ const createShuffledDeck = (): Card[] => {
 
 
 const MemoryGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) => {
-    const { user, updateUserStats } = useContext(AuthContext);
+    const { user, updateUserStats, saveGame, clearSavedGame } = useContext(AuthContext);
     const startTimeRef = useRef<number>(Date.now());
     
     const [cards, setCards] = useState<Card[]>(createShuffledDeck());
     const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
     const [moves, setMoves] = useState(0);
     const [isChecking, setIsChecking] = useState(false);
+    const [showContinueModal, setShowContinueModal] = useState(false);
+    const [isGameReady, setIsGameReady] = useState(false);
 
     const isGameWon = useMemo(() => cards.every(card => card.isMatched), [cards]);
+    const savedStateJSON = useMemo(() => user?.savedGames?.['memory-game'], [user]);
+
+    useEffect(() => {
+        if (user && savedStateJSON) {
+            setShowContinueModal(true);
+        } else {
+            setIsGameReady(true);
+        }
+    }, [user, savedStateJSON]);
     
     useEffect(() => {
         if (isGameWon && user) {
             const timePlayed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-            // In a single-player game, every win is a 'win'. No losses or draws unless we add an AI opponent.
             updateUserStats('memory-game', 'win', timePlayed);
         }
     }, [isGameWon, user, updateUserStats]);
@@ -83,11 +94,61 @@ const MemoryGame: React.FC<GameComponentProps> = ({ onBackToLobby, gameName }) =
         startTimeRef.current = Date.now();
     };
 
+    const handleContinueGame = () => {
+        if (savedStateJSON) {
+            const savedState = JSON.parse(savedStateJSON);
+            setCards(savedState.cards);
+            setMoves(savedState.moves);
+            const timePlayedSoFar = savedState.timePlayed || 0;
+            startTimeRef.current = Date.now() - timePlayedSoFar * 1000;
+        }
+        setShowContinueModal(false);
+        setIsGameReady(true);
+    };
+
+    const handleStartNewGame = () => {
+        clearSavedGame('memory-game');
+        handleReset();
+        setShowContinueModal(false);
+        setIsGameReady(true);
+    };
+
+    const handleSaveAndExit = () => {
+        if (user && !isGameWon) {
+            const timePlayed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            const gameState = JSON.stringify({
+                cards,
+                moves,
+                timePlayed,
+            });
+            saveGame('memory-game', gameState);
+        }
+        onBackToLobby();
+    };
+
+    if (!isGameReady && user) {
+        return (
+            <div className="w-full max-w-2xl mx-auto flex items-center justify-center h-96">
+                <ContinueGameModal 
+                    isOpen={showContinueModal}
+                    onContinue={handleContinueGame}
+                    onStartNew={handleStartNewGame}
+                    title="Unfinished Game Found"
+                    message="Would you like to continue your saved Memory Game?"
+                />
+                 {!showContinueModal && <p className="text-brand-light">Loading game...</p>}
+            </div>
+        );
+    }
+
     return (
         <div className="w-full max-w-2xl mx-auto bg-brand-primary p-6 rounded-lg shadow-2xl animate-fade-in">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-3xl font-bold text-brand-light">{gameName}</h2>
-                <button onClick={onBackToLobby} className="text-sm text-brand-accent hover:underline">Back to Lobby</button>
+                 <div>
+                    {user && <button onClick={handleSaveAndExit} className="text-sm bg-brand-secondary text-brand-light hover:bg-brand-accent hover:text-brand-primary font-medium py-1 px-3 rounded-md transition-colors duration-300 mr-2">Save & Exit</button>}
+                    <button onClick={onBackToLobby} className="text-sm text-brand-accent hover:underline">Back to Lobby</button>
+                </div>
             </div>
 
             <div className="flex justify-between items-center bg-brand-secondary p-3 rounded-md mb-6">

@@ -1,9 +1,10 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType, GameId, TrophyCollection } from '../types';
+import { User, AuthContextType, GameId, TrophyCollection, GameHistoryEntry } from '../types';
 
 export const AuthContext = createContext<AuthContextType>({
     user: null,
-    login: () => {},
+    allUsers: [],
+    login: () => false,
     logout: () => {},
     updateUserStats: () => {},
     isAuthModalOpen: false,
@@ -11,6 +12,8 @@ export const AuthContext = createContext<AuthContextType>({
     updatePlayerName: () => {},
     deleteAccount: () => {},
     toggleSound: () => {},
+    saveGame: () => {},
+    clearSavedGame: () => {},
 });
 
 const defaultUserStats = {
@@ -29,66 +32,106 @@ const MOCK_TROPHIES: TrophyCollection = {
     bronze: ["Week 20, 2024"]
 };
 
+const DB_KEY = 'boardGameUsers';
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [isAuthModalOpen, setAuthModalOpen] = useState(false);
 
     useEffect(() => {
         try {
-            const storedUser = localStorage.getItem('boardGameUser');
-            if (storedUser) {
-                const parsedUser: User = JSON.parse(storedUser);
-                // Ensure all fields exist for users created before this update
-                if (!parsedUser.playerName) parsedUser.playerName = parsedUser.email.split('@')[0];
-                if (parsedUser.soundEnabled === undefined) parsedUser.soundEnabled = true;
-                if (!parsedUser.trophies) parsedUser.trophies = { gold: [], silver: [], bronze: [] };
-                setUser(parsedUser);
+            const db = localStorage.getItem(DB_KEY);
+            const users = db ? JSON.parse(db) : [];
+            setAllUsers(users);
+
+            // Check for a logged-in session using localStorage for persistence
+            const sessionUserEmail = localStorage.getItem('loggedInUser');
+            if(sessionUserEmail) {
+                const sessionUser = users.find((u: User) => u.email === sessionUserEmail);
+                if (sessionUser) {
+                    // Ensure all fields exist for users created before this update
+                    if (!sessionUser.playerName) sessionUser.playerName = sessionUser.email.split('@')[0];
+                    if (sessionUser.soundEnabled === undefined) sessionUser.soundEnabled = true;
+                    if (!sessionUser.trophies) sessionUser.trophies = { gold: [], silver: [], bronze: [] };
+                    if (!sessionUser.savedGames) sessionUser.savedGames = {};
+                    if (!sessionUser.gameHistory) sessionUser.gameHistory = [];
+                    setUser(sessionUser);
+                }
             }
         } catch (error) {
-            console.error("Failed to parse user from localStorage", error);
-            localStorage.removeItem('boardGameUser');
+            console.error("Failed to parse users from localStorage", error);
+            localStorage.removeItem(DB_KEY);
         }
     }, []);
 
-    const login = (email: string) => {
-        // Check if user already exists
-        const storedUser = localStorage.getItem('boardGameUser');
-        if (storedUser) {
-           const parsedUser: User = JSON.parse(storedUser);
-           if(parsedUser.email === email) {
-                setUser(parsedUser);
-                setAuthModalOpen(false);
-                return;
-           }
+    const updateDb = (updatedUsers: User[]) => {
+        localStorage.setItem(DB_KEY, JSON.stringify(updatedUsers));
+        setAllUsers(updatedUsers);
+    }
+
+    const login = (email: string, password: string): boolean => {
+        if (!email || !password) {
+            return false;
         }
 
-        const newUser: User = {
-            email,
-            playerName: email.split('@')[0],
-            soundEnabled: true,
-            trophies: MOCK_TROPHIES, // Give new users some mock trophies for demo
-            stats: defaultUserStats,
-        };
-        localStorage.setItem('boardGameUser', JSON.stringify(newUser));
-        setUser(newUser);
-        setAuthModalOpen(false);
+        const existingUser: User | undefined = allUsers.find(u => u.email === email);
+
+        if (existingUser) {
+            // Login for existing user
+            if (existingUser.password === password) {
+                setUser(existingUser);
+                localStorage.setItem('loggedInUser', email);
+                setAuthModalOpen(false);
+                return true;
+            } else {
+                // Incorrect password
+                return false;
+            }
+        } else {
+            // Sign up for new user
+            const newUser: User = {
+                email,
+                password,
+                playerName: email.split('@')[0],
+                soundEnabled: true,
+                trophies: MOCK_TROPHIES, // Give new users some mock trophies for demo
+                stats: defaultUserStats,
+                savedGames: {},
+                gameHistory: [],
+            };
+            const updatedUsers = [...allUsers, newUser];
+            updateDb(updatedUsers);
+        
+            setUser(newUser);
+            localStorage.setItem('loggedInUser', email);
+            setAuthModalOpen(false);
+            return true;
+        }
     };
 
     const logout = () => {
-        // We don't remove from localStorage, just "log out"
         setUser(null);
+        localStorage.removeItem('loggedInUser');
     };
 
     const deleteAccount = () => {
         if (!user) return;
-        localStorage.removeItem('boardGameUser');
-        setUser(null);
+        const updatedUsers = allUsers.filter(u => u.email !== user.email);
+        updateDb(updatedUsers);
+        logout();
+    }
+    
+    const updateUserInDb = (updatedUser: User) => {
+        const updatedUsers = allUsers.map(u => u.email === updatedUser.email ? updatedUser : u);
+        updateDb(updatedUsers);
+        setUser(updatedUser);
     }
 
     const updateUserStats = (gameId: GameId, result: 'win' | 'loss' | 'draw', timePlayed: number) => {
         if (!user) return;
 
-        const updatedUser = { ...user, stats: { ...user.stats } };
+        const updatedUser = { ...user, stats: { ...user.stats }, gameHistory: [...user.gameHistory] };
         const gameStats = { ...updatedUser.stats[gameId] };
 
         if (result === 'win') gameStats.wins += 1;
@@ -97,26 +140,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         gameStats.timePlayed += timePlayed;
         
         updatedUser.stats[gameId] = gameStats;
-        setUser(updatedUser);
-        localStorage.setItem('boardGameUser', JSON.stringify(updatedUser));
+        
+        const historyEntry: GameHistoryEntry = { gameId, result, timePlayed, date: new Date().toISOString() };
+        updatedUser.gameHistory.push(historyEntry);
+
+        if (updatedUser.savedGames?.[gameId]) {
+            delete updatedUser.savedGames[gameId];
+        }
+        
+        updateUserInDb(updatedUser);
     };
 
     const updatePlayerName = (newName: string) => {
         if (!user || !newName.trim()) return;
         const updatedUser = { ...user, playerName: newName.trim() };
-        setUser(updatedUser);
-        localStorage.setItem('boardGameUser', JSON.stringify(updatedUser));
+        updateUserInDb(updatedUser);
     };
 
     const toggleSound = () => {
         if (!user) return;
         const updatedUser = { ...user, soundEnabled: !user.soundEnabled };
-        setUser(updatedUser);
-        localStorage.setItem('boardGameUser', JSON.stringify(updatedUser));
+        updateUserInDb(updatedUser);
+    };
+    
+    const saveGame = (gameId: GameId, gameState: string) => {
+        if (!user) return;
+        const updatedUser = { 
+            ...user, 
+            savedGames: { ...user.savedGames, [gameId]: gameState }
+        };
+        updateUserInDb(updatedUser);
+    };
+
+    const clearSavedGame = (gameId: GameId) => {
+        if (!user || !user.savedGames?.[gameId]) return;
+        const updatedUser = { ...user };
+        delete updatedUser.savedGames[gameId];
+        updateUserInDb(updatedUser);
     };
 
     const value = {
         user,
+        allUsers,
         login,
         logout,
         updateUserStats,
@@ -125,6 +190,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updatePlayerName,
         deleteAccount,
         toggleSound,
+        saveGame,
+        clearSavedGame,
     };
 
     return (

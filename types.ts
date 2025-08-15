@@ -23,6 +23,13 @@ export interface GameStats {
     timePlayed: number; // in seconds
 }
 
+export interface GameHistoryEntry {
+    gameId: GameId;
+    result: 'win' | 'loss' | 'draw';
+    timePlayed: number;
+    date: string; // ISO string
+}
+
 export interface TrophyCollection {
     gold: string[];
     silver: string[];
@@ -31,15 +38,19 @@ export interface TrophyCollection {
 
 export interface User {
     email: string;
+    password: string;
     playerName: string;
     soundEnabled: boolean;
     trophies: TrophyCollection;
     stats: Record<GameId, GameStats>;
+    savedGames?: Partial<Record<GameId, string>>; // e.g., { chess: 'fen_string' }
+    gameHistory: GameHistoryEntry[];
 }
 
 export interface AuthContextType {
     user: User | null;
-    login: (email: string) => void;
+    allUsers: User[];
+    login: (email: string, password: string) => boolean;
     logout: () => void;
     updateUserStats: (gameId: GameId, result: 'win' | 'loss' | 'draw', timePlayed: number) => void;
     isAuthModalOpen: boolean;
@@ -47,6 +58,8 @@ export interface AuthContextType {
     updatePlayerName: (newName: string) => void;
     deleteAccount: () => void;
     toggleSound: () => void;
+    saveGame: (gameId: GameId, gameState: string) => void;
+    clearSavedGame: (gameId: GameId) => void;
 }
 
 export interface AudioContextType {
