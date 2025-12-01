@@ -12,14 +12,14 @@ type PieceState = { pos: number; state: PieceStateVal }; // pos is 0-54 for main
 type GameState = Record<Player, PieceState[]>;
 
 // START SQUARES (Main Track Indices)
-// Adjusted to be the corner squares based on feedback
+// Corrected to correspond to the colored squares (2nd from corner)
 const PLAYER_STARTS: Record<Player, number> = { 
-    red: 54, green: 12, yellow: 26, blue: 40 
+    red: 0, green: 13, yellow: 27, blue: 41 
 };
 
 // SAFE SQUARES (Star/Globe)
 // Start square + 8th square from start
-const SAFE_SQUARES = [54, 7, 12, 20, 26, 34, 40, 48];
+const SAFE_SQUARES = [0, 8, 13, 21, 27, 35, 41, 49];
 
 // HOME STRETCH ENTRY POINT (Index on main track where piece enters home stretch)
 // This is the square typically adjacent to the home column arrow
