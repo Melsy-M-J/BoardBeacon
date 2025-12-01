@@ -1,23 +1,24 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import { Game, GameId } from './types';
-import GameLobby from './components/GameLobby';
-import TicTacToeGame from './games/tic-tac-toe/TicTacToeGame';
-import MemoryGame from './games/memory-game/MemoryGame';
-import SudokuGame from './games/sudoku/SudokuGame';
-import ChessGame from './games/chess/ChessGame';
-import CheckersGame from './games/checkers/CheckersGame';
-import LudoGame from './games/ludo/LudoGame';
-import SnakesAndLaddersGame from './games/snakes-and-ladders/SnakesAndLaddersGame';
-import ComingSoonGame from './games/ComingSoonGame';
-import Header from './components/Header';
-import ProfilePage from './components/ProfilePage';
-import Leaderboard from './components/Leaderboard';
-import AuthModal from './components/auth/AuthModal';
-import ConfirmationModal from './components/ConfirmationModal';
-import { AuthContext } from './contexts/AuthContext';
+import GameLobby from '../components/GameLobby';
+import TicTacToeGame from '../games/tic-tac-toe/TicTacToeGame';
+import MemoryGame from '../games/memory-game/MemoryGame';
+import SudokuGame from '../games/sudoku/SudokuGame';
+import ChessGame from '../games/chess/ChessGame';
+import CheckersGame from '../games/checkers/CheckersGame';
+import LudoGame from '../games/ludo/LudoGame';
+import SnakesAndLaddersGame from '../games/snakes-and-ladders/SnakesAndLaddersGame';
+import ComingSoonGame from '../games/ComingSoonGame';
+import Header from '../components/Header';
+import ProfilePage from '../components/ProfilePage';
+import Leaderboard from '../components/Leaderboard';
+import AuthModal from '../components/auth/AuthModal';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { AuthContext } from '../contexts/AuthContext';
 // Fix: Renamed AudioContext to GameAudioContext to avoid potential naming conflicts.
-import { GameAudioContext } from './contexts/AudioContext';
-import { TicTacToeIcon, MemoryGameIcon, ChessIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon, SudokuIcon } from './components/icons';
+// Fix: Corrected the import path for GameAudioContext to point to the correct file location.
+import { GameAudioContext } from '../contexts/AudioContext';
+import { TicTacToeIcon, MemoryGameIcon, ChessIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon, SudokuIcon } from '../components/icons';
 
 type View = 'lobby' | 'profile' | 'leaderboard';
 

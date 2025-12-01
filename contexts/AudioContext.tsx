@@ -1,7 +1,8 @@
 import React, { createContext, useState, useRef, ReactNode, useCallback } from 'react';
 import { AudioContextType } from '../types';
 
-export const AudioContext = createContext<AudioContextType>({
+// Fix: Renamed AudioContext to GameAudioContext to avoid potential naming conflicts with the browser's built-in AudioContext API.
+export const GameAudioContext = createContext<AudioContextType>({
     playLobbyMusic: () => {},
     playGameMusic: () => {},
     stopMusic: () => {},
@@ -64,8 +65,8 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     return (
-        <AudioContext.Provider value={value}>
+        <GameAudioContext.Provider value={value}>
             {children}
-        </AudioContext.Provider>
+        </GameAudioContext.Provider>
     );
 };
