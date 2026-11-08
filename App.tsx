@@ -8,6 +8,7 @@ import ChessGame from './games/chess/ChessGame';
 import CheckersGame from './games/checkers/CheckersGame';
 import LudoGame from './games/ludo/LudoGame';
 import SnakesAndLaddersGame from './games/snakes-and-ladders/SnakesAndLaddersGame';
+import MahjongGame from './games/mahjong/MahjongGame';
 import ComingSoonGame from './games/ComingSoonGame';
 import Header from './components/Header';
 import ProfilePage from './components/ProfilePage';
@@ -17,7 +18,7 @@ import ConfirmationModal from './components/ConfirmationModal';
 import { AuthContext } from './contexts/AuthContext';
 // Fix: Renamed AudioContext to GameAudioContext to avoid potential naming conflicts.
 import { GameAudioContext } from './contexts/AudioContext';
-import { TicTacToeIcon, MemoryGameIcon, ChessIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon, SudokuIcon } from './components/icons';
+import { TicTacToeIcon, MemoryGameIcon, ChessIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon, SudokuIcon, MahjongIcon } from './components/icons';
 
 type View = 'lobby' | 'profile' | 'leaderboard';
 
@@ -53,6 +54,7 @@ const App: React.FC = () => {
         { id: 'checkers', name: 'Checkers', description: "Capture all of your opponent's pieces to win.", component: CheckersGame, icon: CheckersIcon },
         { id: 'ludo', name: 'Ludo', description: 'A classic race-to-the-finish dice game for all ages.', component: LudoGame, icon: LudoIcon },
         { id: 'snake-and-ladder', name: 'Snakes & Ladders', description: 'Climb ladders and avoid snakes in this game of luck.', component: SnakesAndLaddersGame, icon: SnakeAndLadderIcon },
+        { id: 'mahjong', name: 'Mahjong', description: 'Classic tile matching solitaire game. Clear the board by finding pairs.', component: MahjongGame, icon: MahjongIcon },
     ], []);
 
     const handleSelectGame = (gameId: GameId) => {

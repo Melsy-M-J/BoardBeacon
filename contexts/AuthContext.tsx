@@ -24,6 +24,7 @@ const defaultUserStats = {
     'checkers': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
     'ludo': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
     'snake-and-ladder': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
+    'mahjong': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
 };
 
 const MOCK_TROPHIES: TrophyCollection = {

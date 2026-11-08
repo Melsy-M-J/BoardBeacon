@@ -1,7 +1,9 @@
+
 import React, { useContext, useState, FormEvent, KeyboardEvent } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { GameId, GameStats, GameHistoryEntry } from '../types';
-import { GoldTrophyIcon, SilverTrophyIcon, BronzeTrophyIcon, EditIcon, ChessIcon, TicTacToeIcon, MemoryGameIcon, SudokuIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon } from './icons';
+import { GoldTrophyIcon, SilverTrophyIcon, BronzeTrophyIcon, EditIcon, ChessIcon, TicTacToeIcon, MemoryGameIcon, SudokuIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon, MahjongIcon } from './icons';
+import Badge, { BadgeProps } from './Badge';
 
 interface ProfilePageProps {
     onBack: () => void;
@@ -16,7 +18,21 @@ const GAME_ICONS: Record<GameId, React.FC<React.SVGProps<SVGSVGElement>>> = {
     'checkers': CheckersIcon,
     'ludo': LudoIcon,
     'snake-and-ladder': SnakeAndLadderIcon,
+    'mahjong': MahjongIcon,
 };
+
+const BADGE_MILESTONES: BadgeProps[] = [
+    { wins: 1, title: "First Blood", tier: "bronze" },
+    { wins: 3, title: "Hat Trick", tier: "bronze" },
+    { wins: 5, title: "High Five", tier: "silver" },
+    { wins: 10, title: "Decade", tier: "silver" },
+    { wins: 25, title: "Quarter Century", tier: "gold" },
+    { wins: 50, title: "Golden Jubilee", tier: "gold" },
+    { wins: 100, title: "Centurion", tier: "platinum" },
+    { wins: 150, title: "Conqueror", tier: "platinum" },
+    { wins: 250, title: "Master", tier: "diamond" },
+    { wins: 500, title: "Legend", tier: "diamond" },
+];
 
 const getGameName = (gameId: GameId) => gameId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
@@ -59,38 +75,56 @@ const StatCard: React.FC<{ gameId: GameId, stats: GameStats }> = ({ gameId, stat
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (winRate / 100) * circumference;
 
+    const earnedBadges = BADGE_MILESTONES.filter(milestone => stats.wins >= milestone.wins);
+
     return (
         <div className="bg-brand-secondary rounded-lg p-4 flex flex-col items-center text-center">
-            <Icon className="w-10 h-10 text-brand-accent mb-2" />
-            <h4 className="text-lg font-bold text-brand-light mb-3">{getGameName(gameId)}</h4>
-            <div className="relative w-32 h-32 mb-3">
-                <svg className="w-full h-full" viewBox="0 0 120 120">
-                    <circle className="text-brand-primary" strokeWidth="8" stroke="currentColor" fill="transparent" r={radius} cx="60" cy="60" />
-                    <circle 
-                        className="text-brand-accent" 
-                        strokeWidth="8" 
-                        strokeDasharray={circumference} 
-                        strokeDashoffset={offset} 
-                        strokeLinecap="round" 
-                        stroke="currentColor" 
-                        fill="transparent" 
-                        r={radius} 
-                        cx="60" 
-                        cy="60" 
-                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                    />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold text-brand-accent">{winRate}%</span>
-                    <span className="text-xs text-gray-400">Win Rate</span>
+            <div className="flex items-center gap-2 mb-2">
+                <Icon className="w-8 h-8 text-brand-accent" />
+                <h4 className="text-lg font-bold text-brand-light">{getGameName(gameId)}</h4>
+            </div>
+            
+            <div className="flex flex-row w-full justify-around mb-4">
+                 <div className="relative w-24 h-24">
+                    <svg className="w-full h-full" viewBox="0 0 120 120">
+                        <circle className="text-brand-primary" strokeWidth="8" stroke="currentColor" fill="transparent" r={radius} cx="60" cy="60" />
+                        <circle 
+                            className="text-brand-accent" 
+                            strokeWidth="8" 
+                            strokeDasharray={circumference} 
+                            strokeDashoffset={offset} 
+                            strokeLinecap="round" 
+                            stroke="currentColor" 
+                            fill="transparent" 
+                            r={radius} 
+                            cx="60" 
+                            cy="60" 
+                            style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-bold text-brand-accent">{winRate}%</span>
+                        <span className="text-[10px] text-gray-400">Win Rate</span>
+                    </div>
+                </div>
+                <div className="text-sm text-brand-light space-y-1 text-left flex flex-col justify-center">
+                    <p><span className="text-gray-400">Wins:</span> {stats.wins}</p>
+                    <p><span className="text-gray-400">Losses:</span> {stats.losses}</p>
+                    <p><span className="text-gray-400">Draws:</span> {stats.draws}</p>
+                    <p><span className="text-gray-400">Time:</span> {formatTime(stats.timePlayed)}</p>
                 </div>
             </div>
-            <div className="text-sm text-brand-light space-y-1">
-                <p><strong>Wins:</strong> {stats.wins}</p>
-                <p><strong>Losses:</strong> {stats.losses}</p>
-                <p><strong>Draws:</strong> {stats.draws}</p>
-                <p><strong>Time Played:</strong> {formatTime(stats.timePlayed)}</p>
-            </div>
+            
+            {earnedBadges.length > 0 && (
+                <div className="w-full pt-3 border-t border-brand-primary/30">
+                    <p className="text-xs text-brand-accent font-semibold mb-2 text-left uppercase tracking-wider">Achievements</p>
+                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                        {earnedBadges.slice().reverse().map((badge) => (
+                            <Badge key={badge.wins} {...badge} />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -182,7 +216,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onDeleteRequest }) =>
                         </div>
                     </div>
                      <div>
-                        <h3 className="text-xl font-semibold text-brand-accent mb-3">Trophies</h3>
+                        <h3 className="text-xl font-semibold text-brand-accent mb-3">Weekly Trophies</h3>
                         <div className="flex items-center gap-4">
                             <TrophyDisplay type="gold" dates={user.trophies.gold} />
                             <TrophyDisplay type="silver" dates={user.trophies.silver} />
@@ -209,7 +243,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onDeleteRequest }) =>
                 <div className="p-4 bg-brand-secondary rounded-lg">
                     <h3 className="text-xl font-semibold text-brand-accent mb-4">Game Statistics</h3>
                     {playedGames.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[450px] overflow-y-auto pr-2">
+                        <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2">
                              {playedGames.map(([gameId, stats]) => (
                                 <StatCard key={gameId} gameId={gameId as GameId} stats={stats as GameStats} />
                             ))}
@@ -224,14 +258,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onDeleteRequest }) =>
                 <div className="p-4 bg-brand-secondary rounded-lg">
                      <h3 className="text-xl font-semibold text-brand-accent mb-4">Game History</h3>
                      {sortedHistory.length > 0 ? (
-                        <div className="max-h-[450px] overflow-y-auto pr-2">
+                        <div className="max-h-[600px] overflow-y-auto pr-2">
                             <table className="min-w-full text-left">
                                 <thead>
                                     <tr>
                                         <th className="p-3 text-sm font-semibold text-brand-accent">Game</th>
                                         <th className="p-3 text-sm font-semibold text-brand-accent">Result</th>
-                                        <th className="p-3 text-sm font-semibold text-brand-accent">Duration</th>
-                                        <th className="p-3 text-sm font-semibold text-brand-accent">Date</th>
+                                        <th className="p-3 text-sm font-semibold text-brand-accent hidden sm:table-cell">Duration</th>
+                                        <th className="p-3 text-sm font-semibold text-brand-accent hidden sm:table-cell">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>

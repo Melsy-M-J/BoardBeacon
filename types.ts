@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type GameId = 'tic-tac-toe' | 'memory-game' | 'chess' | 'checkers' | 'ludo' | 'snake-and-ladder' | 'sudoku';
+export type GameId = 'tic-tac-toe' | 'memory-game' | 'chess' | 'checkers' | 'ludo' | 'snake-and-ladder' | 'sudoku' | 'mahjong';
 
 export interface Game {
     id: GameId;

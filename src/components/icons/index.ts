@@ -1,3 +1,4 @@
+
 export { default as CheckersIcon } from './CheckersIcon';
 export { default as ChessIcon } from './ChessIcon';
 export { default as LudoIcon } from './LudoIcon';
@@ -14,3 +15,6 @@ export { default as EditIcon } from './EditIcon';
 export { default as HamburgerIcon } from './HamburgerIcon';
 export { default as CloseIcon } from './CloseIcon';
 export { LudoPieceIcon } from './LudoPieceIcon';
+export { default as MahjongIcon } from './MahjongIcon';
+export { default as SearchIcon } from './SearchIcon';
+export { default as ConnectFourIcon } from './ConnectFourIcon';

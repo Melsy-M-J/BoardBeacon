@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType, GameId, TrophyCollection, GameHistoryEntry } from '../types';
 
@@ -24,6 +25,8 @@ const defaultUserStats = {
     'checkers': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
     'ludo': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
     'snake-and-ladder': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
+    'mahjong': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
+    'connect-four': { wins: 0, losses: 0, draws: 0, timePlayed: 0 },
 };
 
 const MOCK_TROPHIES: TrophyCollection = {
@@ -56,6 +59,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (!sessionUser.trophies) sessionUser.trophies = { gold: [], silver: [], bronze: [] };
                     if (!sessionUser.savedGames) sessionUser.savedGames = {};
                     if (!sessionUser.gameHistory) sessionUser.gameHistory = [];
+                    // Ensure stats have all keys
+                    sessionUser.stats = { ...defaultUserStats, ...sessionUser.stats };
                     setUser(sessionUser);
                 }
             }
@@ -80,7 +85,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (existingUser) {
             // Login for existing user
             if (existingUser.password === password) {
-                setUser(existingUser);
+                // Ensure stats have all keys on login too
+                const userWithStats = { ...existingUser, stats: { ...defaultUserStats, ...existingUser.stats } };
+                setUser(userWithStats);
                 localStorage.setItem('loggedInUser', email);
                 setAuthModalOpen(false);
                 return true;
@@ -132,12 +139,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!user) return;
 
         // Create a new stats object for the specific game, handling all updates immutably
+        const currentStats = user.stats[gameId] || defaultUserStats[gameId];
         const newGameStats = {
-            ...user.stats[gameId],
-            wins: user.stats[gameId].wins + (result === 'win' ? 1 : 0),
-            losses: user.stats[gameId].losses + (result === 'loss' ? 1 : 0),
-            draws: user.stats[gameId].draws + (result === 'draw' ? 1 : 0),
-            timePlayed: user.stats[gameId].timePlayed + timePlayed,
+            ...currentStats,
+            wins: currentStats.wins + (result === 'win' ? 1 : 0),
+            losses: currentStats.losses + (result === 'loss' ? 1 : 0),
+            draws: currentStats.draws + (result === 'draw' ? 1 : 0),
+            timePlayed: currentStats.timePlayed + timePlayed,
         };
 
         // Create a new history entry
