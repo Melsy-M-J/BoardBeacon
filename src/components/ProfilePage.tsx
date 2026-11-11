@@ -1,298 +1,407 @@
-
-import React, { useContext, useState, FormEvent, KeyboardEvent } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
-import { GameId, GameStats, GameHistoryEntry } from '../types';
-import { GoldTrophyIcon, SilverTrophyIcon, BronzeTrophyIcon, EditIcon, ChessIcon, TicTacToeIcon, MemoryGameIcon, SudokuIcon, CheckersIcon, LudoIcon, SnakeAndLadderIcon, MahjongIcon, ConnectFourIcon } from './icons';
-import Badge, { BadgeProps } from './Badge';
+import { ThemeContext } from '../contexts/ThemeContext';
+import { ThemeId } from '../types/theme';
+import { ArrowLeft, Trophy, Award, Flame, RotateCcw, Trash2, Edit2, Check, Sparkles, Star, Palette, CheckCircle2 } from 'lucide-react';
+import Badge from './Badge';
+import { ALL_BADGES } from '../services/challengeService';
 
 interface ProfilePageProps {
-    onBack: () => void;
-    onDeleteRequest: () => void;
+  onBack: () => void;
+  onDeleteRequest: () => void;
 }
 
-const GAME_ICONS: Record<GameId, React.FC<React.SVGProps<SVGSVGElement>>> = {
-    'chess': ChessIcon,
-    'tic-tac-toe': TicTacToeIcon,
-    'memory-game': MemoryGameIcon,
-    'sudoku': SudokuIcon,
-    'checkers': CheckersIcon,
-    'ludo': LudoIcon,
-    'snake-and-ladder': SnakeAndLadderIcon,
-    'mahjong': MahjongIcon,
-    'connect-four': ConnectFourIcon,
-};
+const AVATAR_OPTIONS = ['🎲', '♟️', '👑', '🚀', '🔥', '🎯', '🦁', '⭐'];
 
-const BADGE_MILESTONES: BadgeProps[] = [
-    { wins: 1, title: "First Blood", tier: "bronze" },
-    { wins: 3, title: "Hat Trick", tier: "bronze" },
-    { wins: 5, title: "High Five", tier: "silver" },
-    { wins: 10, title: "Decade", tier: "silver" },
-    { wins: 25, title: "Quarter Century", tier: "gold" },
-    { wins: 50, title: "Golden Jubilee", tier: "gold" },
-    { wins: 100, title: "Centurion", tier: "platinum" },
-    { wins: 150, title: "Conqueror", tier: "platinum" },
-    { wins: 250, title: "Master", tier: "diamond" },
-    { wins: 500, title: "Legend", tier: "diamond" },
-];
+export const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onDeleteRequest }) => {
+  const { user, updateUsername, updateAvatar, updateTheme } = useContext(AuthContext);
+  const { theme, setTheme, availableThemes } = useContext(ThemeContext);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState(user.username);
 
-const getGameName = (gameId: GameId) => gameId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const handleSelectTheme = (themeId: ThemeId) => {
+    setTheme(themeId);
+    updateTheme(themeId);
+  };
 
-const formatTime = (seconds: number) => {
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (minutes < 60) return `${minutes}m ${remainingSeconds}s`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes}m`;
-};
-
-const TrophyDisplay = ({ type, dates }: { type: 'gold' | 'silver' | 'bronze', dates: string[] }) => {
-    if (dates.length === 0) return null;
-    const Icon = { gold: GoldTrophyIcon, silver: SilverTrophyIcon, bronze: BronzeTrophyIcon }[type];
-    return (
-        <div className="relative group">
-            <div className="flex items-center gap-2 bg-brand-secondary/50 p-2 rounded-md">
-                <Icon className="w-8 h-8" />
-                <span className="font-bold text-brand-light text-xl">x {dates.length}</span>
-            </div>
-            <div className="absolute bottom-full mb-2 w-max max-w-xs bg-brand-primary text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none animate-pop-in z-10 shadow-lg">
-                <h4 className="font-bold capitalize border-b border-brand-secondary pb-1 mb-1">{type} Trophies</h4>
-                <ul className="list-disc list-inside">
-                    {dates.map(date => <li key={date}>Won: {date}</li>)}
-                </ul>
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-[-4px] w-2 h-2 bg-brand-primary rotate-45"></div>
-            </div>
-        </div>
-    );
-};
-
-const StatCard: React.FC<{ gameId: GameId, stats: GameStats }> = ({ gameId, stats }) => {
-    const totalGames = stats.wins + stats.losses + stats.draws;
-    const winRate = totalGames > 0 ? Math.round((stats.wins / totalGames) * 100) : 0;
-    const Icon = GAME_ICONS[gameId];
-    
-    const radius = 50;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (winRate / 100) * circumference;
-
-    const earnedBadges = BADGE_MILESTONES.filter(milestone => stats.wins >= milestone.wins);
-
-    return (
-        <div className="bg-brand-secondary rounded-lg p-4 flex flex-col items-center text-center">
-            <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-8 h-8 text-brand-accent" />
-                <h4 className="text-lg font-bold text-brand-light">{getGameName(gameId)}</h4>
-            </div>
-            
-            <div className="flex flex-row w-full justify-around mb-4">
-                 <div className="relative w-24 h-24">
-                    <svg className="w-full h-full" viewBox="0 0 120 120">
-                        <circle className="text-brand-primary" strokeWidth="8" stroke="currentColor" fill="transparent" r={radius} cx="60" cy="60" />
-                        <circle 
-                            className="text-brand-accent" 
-                            strokeWidth="8" 
-                            strokeDasharray={circumference} 
-                            strokeDashoffset={offset} 
-                            strokeLinecap="round" 
-                            stroke="currentColor" 
-                            fill="transparent" 
-                            r={radius} 
-                            cx="60" 
-                            cy="60" 
-                            style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                        />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-brand-accent">{winRate}%</span>
-                        <span className="text-[10px] text-gray-400">Win Rate</span>
-                    </div>
-                </div>
-                <div className="text-sm text-brand-light space-y-1 text-left flex flex-col justify-center">
-                    <p><span className="text-gray-400">Wins:</span> {stats.wins}</p>
-                    <p><span className="text-gray-400">Losses:</span> {stats.losses}</p>
-                    <p><span className="text-gray-400">Draws:</span> {stats.draws}</p>
-                    <p><span className="text-gray-400">Time:</span> {formatTime(stats.timePlayed)}</p>
-                </div>
-            </div>
-            
-            {earnedBadges.length > 0 && (
-                <div className="w-full pt-3 border-t border-brand-primary/30">
-                    <p className="text-xs text-brand-accent font-semibold mb-2 text-left uppercase tracking-wider">Achievements</p>
-                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                        {earnedBadges.slice().reverse().map((badge) => (
-                            <Badge key={badge.wins} {...badge} />
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const HistoryRow: React.FC<{ entry: GameHistoryEntry }> = ({ entry }) => {
-    const Icon = GAME_ICONS[entry.gameId];
-    const resultColor = entry.result === 'win' ? 'text-green-400' : entry.result === 'loss' ? 'text-red-400' : 'text-gray-400';
-
-    return (
-        <tr className="border-b border-brand-secondary/50 hover:bg-brand-secondary/30">
-            <td className="p-3 text-sm text-brand-light flex items-center gap-2">
-                <Icon className="w-5 h-5 text-brand-accent" />
-                {getGameName(entry.gameId)}
-            </td>
-            <td className={`p-3 text-sm font-semibold capitalize ${resultColor}`}>{entry.result}</td>
-            <td className="p-3 text-sm text-gray-300">{formatTime(entry.timePlayed)}</td>
-            <td className="p-3 text-sm text-gray-400">{new Date(entry.date).toLocaleString()}</td>
-        </tr>
-    );
-};
-
-
-const ProfilePage: React.FC<ProfilePageProps> = ({ onBack, onDeleteRequest }) => {
-    const { user, updatePlayerName, toggleSound } = useContext(AuthContext);
-    const [isEditingName, setIsEditingName] = useState(false);
-    const [newName, setNewName] = useState(user?.playerName || '');
-    const [showSavedNotification, setShowSavedNotification] = useState(false);
-
-    if (!user) {
-        return (
-            <div className="text-center animate-fade-in">
-                <h2 className="text-2xl text-brand-light mb-4">Please log in to view your profile.</h2>
-                <button onClick={onBack} className="bg-brand-accent text-brand-primary font-bold py-2 px-6 rounded-md hover:bg-opacity-80 transition-colors duration-300">
-                    Back to Lobby
-                </button>
-            </div>
-        );
+  const handleSaveName = () => {
+    if (tempName.trim()) {
+      updateUsername(tempName.trim());
     }
-    
-    const handleNameSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        if(newName.trim() && newName.trim() !== user.playerName) {
-            updatePlayerName(newName);
-            setShowSavedNotification(true);
-            setTimeout(() => setShowSavedNotification(false), 2000);
-        }
-        setIsEditingName(false);
-    };
+    setIsEditingName(false);
+  };
 
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Escape') {
-            setNewName(user.playerName);
-            setIsEditingName(false);
-        }
-    };
-    
-    const playedGames = Object.entries(user.stats).filter(([, stats]: [string, GameStats]) => stats.wins + stats.losses + stats.draws > 0);
-    const sortedHistory = [...user.gameHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const winRate =
+    user.globalStats.gamesPlayed > 0
+      ? Math.round((user.globalStats.gamesWon / user.globalStats.gamesPlayed) * 100)
+      : 0;
 
-    return (
-        <div className="w-full max-w-6xl mx-auto bg-brand-primary p-6 sm:p-8 rounded-lg shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center mb-6 border-b border-brand-secondary pb-4">
-                <div>
-                    <h2 className="text-3xl font-bold text-brand-light">Player Profile</h2>
-                    <p className="text-gray-400">{user.email}</p>
-                </div>
-                <button onClick={onBack} className="text-sm text-brand-accent hover:underline">Back to Lobby</button>
-            </div>
+  return (
+    <div className="w-full flex flex-col gap-6 animate-fade-in pb-12">
+      {/* Top Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center gap-2 text-xs font-semibold transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Lobby</span>
+        </button>
+        <h1 className="text-lg font-bold text-white">Player Profile & Honors</h1>
+      </div>
 
-            {/* Top Section */}
-            <div className="mb-8 p-4 bg-brand-secondary rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div>
-                        <h3 className="text-xl font-semibold text-brand-accent mb-3">Player Details</h3>
-                        <div className="flex items-center gap-4">
-                            <label className="font-bold text-brand-light">Name:</label>
-                            {isEditingName ? (
-                                <form onSubmit={handleNameSubmit} className="flex-grow flex gap-2">
-                                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={handleKeyDown} className="bg-brand-dark text-brand-light px-3 py-1 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-brand-accent" autoFocus />
-                                    <button type="submit" className="bg-brand-accent text-brand-primary font-bold px-3 py-1 rounded-md text-sm">Save</button>
-                                </form>
-                            ) : (
-                                <div className="flex items-center gap-3">
-                                    <p className="text-brand-light text-lg">{user.playerName}</p>
-                                    <button onClick={() => { setIsEditingName(true); setNewName(user.playerName); }} className="text-gray-400 hover:text-brand-accent"><EditIcon className="h-5 w-5" /></button>
-                                </div>
-                            )}
-                            {showSavedNotification && <span className="text-xs text-brand-accent animate-fade-in">Saved!</span>}
-                        </div>
-                    </div>
-                     <div>
-                        <h3 className="text-xl font-semibold text-brand-accent mb-3">Weekly Trophies</h3>
-                        <div className="flex items-center gap-4">
-                            <TrophyDisplay type="gold" dates={user.trophies.gold} />
-                            <TrophyDisplay type="silver" dates={user.trophies.silver} />
-                            <TrophyDisplay type="bronze" dates={user.trophies.bronze} />
-                            {user.trophies.gold.length === 0 && user.trophies.silver.length === 0 && user.trophies.bronze.length === 0 && (
-                                <p className="text-gray-400">No trophies yet.</p>
-                            )}
-                        </div>
-                    </div>
-                    <div>
-                         <h3 className="text-xl font-semibold text-brand-accent mb-3">Settings</h3>
-                         <div className="flex items-center justify-between">
-                            <p className="font-bold text-brand-light">Sound</p>
-                            <button onClick={toggleSound} className={`px-4 py-2 rounded-md font-bold text-sm ${user.soundEnabled ? 'bg-brand-accent text-brand-primary' : 'bg-brand-dark text-brand-light'}`}>
-                                {user.soundEnabled ? 'Enabled' : 'Disabled'}
-                            </button>
-                         </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Stats and History */}
-            <div className="grid lg:grid-cols-2 gap-8">
-                <div className="p-4 bg-brand-secondary rounded-lg">
-                    <h3 className="text-xl font-semibold text-brand-accent mb-4">Game Statistics</h3>
-                    {playedGames.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2">
-                             {playedGames.map(([gameId, stats]) => (
-                                <StatCard key={gameId} gameId={gameId as GameId} stats={stats as GameStats} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 h-full flex items-center justify-center">
-                            <p className="text-gray-400">Play some games to see your stats here!</p>
-                        </div>
-                    )}
-                </div>
-
-                <div className="p-4 bg-brand-secondary rounded-lg">
-                     <h3 className="text-xl font-semibold text-brand-accent mb-4">Game History</h3>
-                     {sortedHistory.length > 0 ? (
-                        <div className="max-h-[600px] overflow-y-auto pr-2">
-                            <table className="min-w-full text-left">
-                                <thead>
-                                    <tr>
-                                        <th className="p-3 text-sm font-semibold text-brand-accent">Game</th>
-                                        <th className="p-3 text-sm font-semibold text-brand-accent">Result</th>
-                                        <th className="p-3 text-sm font-semibold text-brand-accent hidden sm:table-cell">Duration</th>
-                                        <th className="p-3 text-sm font-semibold text-brand-accent hidden sm:table-cell">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {sortedHistory.map((entry, index) => <HistoryRow key={index} entry={entry} />)}
-                                </tbody>
-                            </table>
-                        </div>
-                     ) : (
-                        <div className="text-center py-10 h-full flex items-center justify-center">
-                            <p className="text-gray-400">Your completed games will appear here.</p>
-                        </div>
-                     )}
-                </div>
-            </div>
-            
-            <div className="mt-8 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
-                <h3 className="text-xl font-semibold text-red-400 mb-3">Danger Zone</h3>
-                <div className="flex items-center justify-between">
-                    <p className="text-brand-light">Permanently delete your account and all associated data.</p>
-                    <button onClick={onDeleteRequest} className="bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition-colors">
-                        Delete Account
-                    </button>
-                </div>
-            </div>
+      {/* Profile Card */}
+      <div
+        style={{
+          backgroundColor: 'var(--theme-surface-card, #0f172a)',
+          borderColor: 'var(--theme-border-hairline, #1e293b)',
+        }}
+        className="border rounded-3xl p-6 shadow-xl flex flex-col sm:flex-row items-center sm:items-start gap-6 transition-colors"
+      >
+        {/* Avatar Selector */}
+        <div className="flex flex-col items-center gap-2">
+          <div
+            style={{
+              backgroundColor: 'var(--theme-accent-glow, rgba(6,182,212,0.2))',
+              borderColor: 'var(--theme-accent-primary, #06b6d4)',
+            }}
+            className="w-20 h-20 rounded-2xl border-2 flex items-center justify-center text-4xl shadow-inner"
+          >
+            {user.avatar || '🎲'}
+          </div>
+          <div className="flex gap-1.5 flex-wrap justify-center max-w-[140px]">
+            {AVATAR_OPTIONS.map((av) => (
+              <button
+                key={av}
+                onClick={() => updateAvatar(av)}
+                className={`w-6 h-6 rounded-lg text-xs flex items-center justify-center transition-transform hover:scale-110 ${
+                  user.avatar === av ? 'bg-cyan-500/40 ring-1 ring-cyan-400' : 'bg-slate-800'
+                }`}
+              >
+                {av}
+              </button>
+            ))}
+          </div>
         </div>
-    );
+
+        {/* User Info */}
+        <div className="flex-1 text-center sm:text-left flex flex-col gap-3">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  className="bg-slate-800 border border-cyan-500 rounded-lg px-2.5 py-1 text-sm text-white focus:outline-none"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSaveName}
+                  className="p-1.5 rounded-lg bg-cyan-500 text-slate-950 hover:bg-cyan-400"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-white">{user.username}</h2>
+                <button
+                  onClick={() => setIsEditingName(true)}
+                  className="p-1 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </>
+            )}
+          </div>
+          <p className="text-xs text-slate-400">
+            Recorded board game matches, daily challenge victories, and unlocked honors.
+          </p>
+
+          {/* Quick Stat Badges */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-2">
+            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">XP Points</span>
+              <span className="text-lg font-bold text-amber-400 font-mono">
+                {user.points || 0}
+              </span>
+            </div>
+            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Daily Streak</span>
+              <span className="text-lg font-bold text-orange-400 font-mono flex items-center justify-center gap-1">
+                <Flame className="w-4 h-4 fill-current" />
+                {user.dailyStreak || 1}d
+              </span>
+            </div>
+            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Matches</span>
+              <span className="text-lg font-bold text-white font-mono">
+                {user.globalStats.gamesPlayed}
+              </span>
+            </div>
+            <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-center">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Victories</span>
+              <span className="text-lg font-bold text-emerald-400 font-mono">
+                {user.globalStats.gamesWon}
+              </span>
+            </div>
+            <div className="bg-black/30 p-3 rounded-xl border border-white/10 text-center">
+              <span className="text-[10px] uppercase font-bold opacity-60 block">Win Rate</span>
+              <span className="text-lg font-bold text-[var(--theme-accent-hover)] font-mono">{winRate}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Board Aesthetic & Game Skins Customizer */}
+      <div
+        style={{
+          backgroundColor: 'var(--theme-surface-card, #0f172a)',
+          borderColor: 'var(--theme-border-hairline, #1e293b)',
+        }}
+        className="border rounded-3xl p-6 shadow-xl flex flex-col gap-4 transition-colors"
+      >
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+              <Palette className="w-4 h-4 text-[var(--theme-accent-hover)]" />
+              <span>Board Aesthetic & Visual Skins</span>
+            </h3>
+            <p className="text-xs opacity-70 mt-0.5">
+              Select an aesthetic skin to transform your boards, pieces, and game atmosphere.
+            </p>
+          </div>
+          <span className="text-xs font-mono px-2.5 py-1 rounded-xl bg-black/20 font-semibold opacity-90">
+            5 Skins Available
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+          {availableThemes.map((t) => {
+            const isActive = theme === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => handleSelectTheme(t.id)}
+                style={{
+                  backgroundColor: t.colors.surfaceCard,
+                  borderColor: isActive ? t.colors.accentPrimary : t.colors.borderHairline,
+                  color: t.colors.textPrimary,
+                }}
+                className={`p-4 rounded-2xl border text-left flex flex-col justify-between gap-3.5 transition-all relative overflow-hidden group cursor-pointer ${
+                  isActive
+                    ? 'ring-2 shadow-lg scale-[1.01]'
+                    : 'hover:scale-[1.02] hover:border-opacity-100 opacity-90 hover:opacity-100'
+                }`}
+              >
+                {/* Active Selection Indicator */}
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-bold text-sm tracking-tight">{t.name}</span>
+                  {isActive ? (
+                    <span
+                      style={{
+                        backgroundColor: t.colors.accentPrimary,
+                        color: t.category === 'light' ? '#fff' : '#020617',
+                      }}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Active</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] opacity-40 group-hover:opacity-80 transition-opacity">
+                      Click to apply
+                    </span>
+                  )}
+                </div>
+
+                {/* Live Micro Board Swatch */}
+                <div
+                  style={{
+                    backgroundColor: t.colors.boardCasing,
+                    borderColor: t.colors.boardBorder,
+                  }}
+                  className="p-2.5 rounded-xl border flex items-center justify-between gap-3 shadow-inner"
+                >
+                  {/* 3x3 Micro Checkerboard Preview */}
+                  <div
+                    style={{ backgroundColor: t.colors.gridBg }}
+                    className="w-14 h-14 rounded-lg overflow-hidden grid grid-cols-3 grid-rows-3 border border-black/20 shrink-0"
+                  >
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+                      const isDark = (Math.floor(i / 3) + (i % 3)) % 2 === 1;
+                      const hasPiece1 = i === 4;
+                      const hasPiece2 = i === 0;
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            backgroundColor: isDark ? t.colors.cellDark : t.colors.cellLight,
+                          }}
+                          className="aspect-square w-full h-full relative flex items-center justify-center"
+                        >
+                          {hasPiece1 && (
+                            <div
+                              style={{
+                                backgroundColor: t.preview.p1,
+                                borderColor: t.colors.piecePlayerBorder,
+                              }}
+                              className="w-2.5 h-2.5 rounded-full border shadow-sm"
+                            />
+                          )}
+                          {hasPiece2 && (
+                            <div
+                              style={{
+                                backgroundColor: t.preview.p2,
+                                borderColor: t.colors.pieceOpponentBorder,
+                              }}
+                              className="w-2.5 h-2.5 rounded-full border shadow-sm"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Palette Swatch Dots */}
+                  <div className="flex flex-col gap-1 text-[11px] opacity-80 flex-1">
+                    <span className="truncate">{t.category === 'light' ? 'Light Mode' : 'Dark Atmosphere'}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span
+                        style={{ backgroundColor: t.colors.bgCanvas }}
+                        className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-sm"
+                        title="Canvas"
+                      />
+                      <span
+                        style={{ backgroundColor: t.colors.cellDark }}
+                        className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-sm"
+                        title="Dark Square"
+                      />
+                      <span
+                        style={{ backgroundColor: t.colors.cellLight }}
+                        className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-sm"
+                        title="Light Square"
+                      />
+                      <span
+                        style={{ backgroundColor: t.colors.accentPrimary }}
+                        className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-sm"
+                        title="Accent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] opacity-70 leading-relaxed">{t.tagline}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Badges Collection Showcase */}
+      <div
+        style={{
+          backgroundColor: 'var(--theme-surface-card, #0f172a)',
+          borderColor: 'var(--theme-border-hairline, #1e293b)',
+        }}
+        className="border rounded-3xl p-6 shadow-xl flex flex-col gap-4 transition-colors"
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-amber-400" />
+            <span>Unlocked Badges ({user.unlockedBadges?.length || 0} / {ALL_BADGES.length})</span>
+          </h3>
+          <span className="text-xs opacity-60">Earned through Daily Challenges</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          {ALL_BADGES.map((b) => {
+            const unlockedInstance = user.unlockedBadges?.find((x) => x.id === b.id);
+            return (
+              <Badge
+                key={b.id}
+                badge={unlockedInstance || b}
+                isUnlocked={Boolean(unlockedInstance)}
+                size="md"
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Recent Matches */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col gap-4">
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          Recorded Match History ({user.recentGames?.length || 0})
+        </h3>
+
+        {user.recentGames && user.recentGames.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {user.recentGames.map((match) => (
+              <div
+                key={match.id}
+                className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-xs"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      match.result === 'win'
+                        ? 'bg-emerald-400'
+                        : match.result === 'loss'
+                        ? 'bg-rose-400'
+                        : 'bg-slate-400'
+                    }`}
+                  />
+                  <div>
+                    <span className="font-semibold text-white block">{match.gameName}</span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(match.date).toLocaleDateString()} · {match.turns} total moves · {match.durationSeconds}s
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-0.5 rounded font-bold uppercase text-[10px] ${
+                      match.result === 'win'
+                        ? 'bg-emerald-500/20 text-emerald-300'
+                        : match.result === 'loss'
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : 'bg-slate-700/40 text-slate-400'
+                    }`}
+                  >
+                    {match.result}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-500 text-xs">
+            No matches recorded yet. Play any game in the lobby to log moves and review matches!
+          </div>
+        )}
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-rose-950/20 border border-rose-900/40 rounded-3xl p-5 flex items-center justify-between">
+        <div>
+          <h4 className="text-xs font-bold text-rose-300">Reset Player Data</h4>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Erase all match statistics, points, badges, and recorded history.
+          </p>
+        </div>
+        <button
+          onClick={onDeleteRequest}
+          className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Reset Data</span>
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default ProfilePage;

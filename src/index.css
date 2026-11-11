@@ -1,0 +1,352 @@
+/* Custom global styles & board game CSS animations */
+:root {
+  --theme-bg-canvas: #0a192f;
+  --theme-surface-card: #0f172a;
+  --theme-surface-card-hover: #1e293b;
+  --theme-border-hairline: #1e293b;
+  --theme-text-primary: #f8fafc;
+  --theme-text-secondary: #94a3b8;
+  --theme-text-muted: #64748b;
+  --theme-accent-primary: #06b6d4;
+  --theme-accent-hover: #22d3ee;
+  --theme-accent-glow: rgba(6, 182, 212, 0.25);
+
+  --theme-board-casing: #091322;
+  --theme-board-border: #1e293b;
+  --theme-grid-bg: #020617;
+  --theme-cell-light: #1e293b;
+  --theme-cell-dark: #0f172a;
+  --theme-cell-text-light: #f1f5f9;
+  --theme-cell-text-dark: #94a3b8;
+  --theme-highlight-move: rgba(6, 182, 212, 0.4);
+  --theme-highlight-win: rgba(251, 191, 36, 0.4);
+
+  --theme-piece-player: #06b6d4;
+  --theme-piece-opponent: #f43f5e;
+  --theme-piece-player-border: #67e8f9;
+  --theme-piece-opponent-border: #fda4af;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--theme-bg-canvas, #0a192f);
+  color: var(--theme-text-primary, #f8fafc);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.theme-surface {
+  background-color: var(--theme-surface-card);
+  border-color: var(--theme-border-hairline);
+  color: var(--theme-text-primary);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.theme-board-casing {
+  background-color: var(--theme-board-casing);
+  border-color: var(--theme-board-border);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a192f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* ========================================================
+   GAME PIECE MOVEMENT & INTERACTION ANIMATIONS
+   ======================================================== */
+
+/* 1. Connect Four: Physics-based Disc Gravity Drop with Bounce */
+@keyframes discDrop {
+  0% {
+    transform: translateY(var(--drop-offset, -320px)) scale(0.92);
+    opacity: 0.7;
+  }
+  60% {
+    transform: translateY(0) scale(1.06, 0.94);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-8px) scale(0.97, 1.03);
+  }
+  92% {
+    transform: translateY(0) scale(1.02, 0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+    opacity: 1;
+  }
+}
+
+.anim-disc-drop {
+  animation: discDrop 0.44s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* 2. Chess & Checkers: Smooth Linear Slide Transition */
+@keyframes pieceSlideIn {
+  0% {
+    transform: translate(var(--slide-x, 0px), var(--slide-y, 0px)) scale(1.18);
+    opacity: 0.8;
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
+  }
+  75% {
+    transform: translate(0, 0) scale(0.98);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+}
+
+.anim-piece-slide {
+  animation: pieceSlideIn 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  will-change: transform;
+}
+
+/* 3. Checkers: Arched Leap/Jump Capture Animation */
+@keyframes checkerJump {
+  0% {
+    transform: translate(var(--jump-x, 0px), var(--jump-y, 0px)) scale(1);
+  }
+  45% {
+    transform: translate(calc(var(--jump-x, 0px) * 0.5), calc(var(--jump-y, 0px) * 0.5 - 28px)) scale(1.28);
+    filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.6));
+  }
+  85% {
+    transform: translate(0, 0) scale(1.08, 0.92);
+  }
+  100% {
+    transform: translate(0, 0) scale(1, 1);
+  }
+}
+
+.anim-checker-jump {
+  animation: checkerJump 0.42s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  will-change: transform;
+}
+
+/* 4. Piece Capture & Vanish */
+@keyframes pieceCapture {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  40% {
+    transform: scale(1.25) rotate(12deg);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.7));
+  }
+  100% {
+    transform: scale(0) rotate(-35deg);
+    opacity: 0;
+  }
+}
+
+.anim-piece-capture {
+  animation: pieceCapture 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+/* 5. King Coronation Burst */
+@keyframes crownBurst {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.4) rotate(15deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.8));
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.anim-crown-burst {
+  animation: crownBurst 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 6. Tic-Tac-Toe: Mark Placement Pop & Glow */
+@keyframes markPopX {
+  0% {
+    transform: scale(0.15) rotate(-20deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 0px rgba(100, 255, 218, 0));
+  }
+  70% {
+    transform: scale(1.22) rotate(4deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 20px rgba(100, 255, 218, 0.9));
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(100, 255, 218, 0.5));
+  }
+}
+
+@keyframes markPopO {
+  0% {
+    transform: scale(0.15) rotate(20deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 0px rgba(251, 113, 133, 0));
+  }
+  70% {
+    transform: scale(1.22) rotate(-4deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 20px rgba(251, 113, 133, 0.9));
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(251, 113, 133, 0.5));
+  }
+}
+
+.anim-mark-x {
+  animation: markPopX 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.anim-mark-o {
+  animation: markPopO 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 7. Memory Game: 3D Card Flip */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-flip-inner {
+  transition: transform 0.42s cubic-bezier(0.34, 1.3, 0.64, 1);
+  transform-style: preserve-3d;
+}
+
+.card-flip-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+@keyframes matchCelebration {
+  0% { transform: rotateY(180deg) scale(1); }
+  50% { transform: rotateY(180deg) scale(1.12); box-shadow: 0 0 24px rgba(16, 185, 129, 0.8); }
+  100% { transform: rotateY(180deg) scale(1); }
+}
+
+.anim-card-matched {
+  animation: matchCelebration 0.45s ease-in-out forwards;
+}
+
+/* 8. Snakes & Ladders / Ludo: Pawn Hop Animation */
+@keyframes pawnHop {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  40% {
+    transform: scale(1.35) translateY(-16px);
+    filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.5));
+  }
+  80% {
+    transform: scale(1.08, 0.92) translateY(0);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.anim-pawn-hop {
+  animation: pawnHop 0.36s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes climbLadder {
+  0% {
+    transform: scale(0.9) translateY(12px);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.35) translateY(-8px);
+    filter: drop-shadow(0 0 14px #34d399);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.anim-climb-ladder {
+  animation: climbLadder 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+@keyframes slideSnake {
+  0% {
+    transform: scale(1.2) translateY(-10px) rotate(12deg);
+  }
+  50% {
+    transform: scale(0.9) translateY(8px) rotate(-12deg);
+    filter: drop-shadow(0 0 14px #fb7185);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+.anim-slide-snake {
+  animation: slideSnake 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+/* 9. Soft Pulsing Rings for Active & Highlighted Cells */
+@keyframes highlightRingPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(100, 255, 218, 0);
+  }
+}
+
+.anim-highlight-pulse {
+  animation: highlightRingPulse 1.8s infinite;
+}
+
+/* 10. Winning Line Shimmer Glow */
+@keyframes winGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.7), inset 0 0 8px rgba(251, 191, 36, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(251, 191, 36, 1), inset 0 0 14px rgba(251, 191, 36, 0.8);
+  }
+}
+
+.anim-win-glow {
+  animation: winGlow 1.2s ease-in-out infinite;
+}

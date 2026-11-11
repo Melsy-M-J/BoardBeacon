@@ -1,6 +1,6 @@
 {
   "name": "BoardBeacon",
-  "description": "A modern, interactive platform to play classic board games against a powerful Gemini-powered AI opponent. Challenge the AI in games like Tic-Tac-Toe, Memory Game, and more to come!",
+  "description": "A modern, interactive platform to play classic board games with Daily Challenges, unique puzzles, rewards, and step-by-step move history recording.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

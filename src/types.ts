@@ -1,72 +1,68 @@
-
 import React from 'react';
+export * from './types/recorder';
+export * from './types/challenges';
+export * from './types/theme';
+import { Badge } from './types/challenges';
+import { ThemeId } from './types/theme';
 
-export type GameId = 'tic-tac-toe' | 'memory-game' | 'chess' | 'checkers' | 'ludo' | 'snake-and-ladder' | 'sudoku' | 'mahjong' | 'connect-four';
-
-export interface Game {
-    id: GameId;
-    name: string;
-    description: string;
-    component: React.FC<GameComponentProps>;
-    icon: React.FC<React.SVGProps<SVGSVGElement>>;
-    isComingSoon?: boolean;
-}
+export type GameId =
+  | 'tic-tac-toe'
+  | 'connect-four'
+  | 'checkers'
+  | 'chess'
+  | 'memory-game'
+  | 'sudoku'
+  | 'ludo'
+  | 'snake-and-ladder'
+  | 'mahjong';
 
 export interface GameComponentProps {
-    onBackToLobby: () => void;
-    gameName: string;
+  onBackToLobby: () => void;
+  gameName: string;
 }
 
-export interface GameStats {
-    wins: number;
-    losses: number;
-    draws: number;
-    timePlayed: number; // in seconds
+export interface Game {
+  id: GameId;
+  name: string;
+  description: string;
+  category?: 'Strategy' | 'Classic' | 'Puzzle' | 'Casual';
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  players?: string;
+  component: React.ComponentType<GameComponentProps>;
+  icon: React.ComponentType<{ className?: string }>;
+  isComingSoon?: boolean;
 }
 
-export interface GameHistoryEntry {
+export interface UserStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  gamesLost: number;
+  gamesDrawn: number;
+  winStreak: number;
+  bestStreak: number;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  avatar: string;
+  soundEnabled: boolean;
+  theme?: ThemeId;
+  points: number;
+  dailyStreak: number;
+  lastChallengeDate?: string;
+  completedChallengeIds: string[];
+  unlockedBadges: Badge[];
+  stats: Record<GameId, UserStats>;
+  globalStats: UserStats;
+  recentGames: Array<{
+    id: string;
     gameId: GameId;
+    gameName: string;
+    date: number;
     result: 'win' | 'loss' | 'draw';
-    timePlayed: number;
-    date: string; // ISO string
-}
-
-export interface TrophyCollection {
-    gold: string[];
-    silver: string[];
-    bronze: string[];
-}
-
-export interface User {
-    email: string;
-    password: string;
-    playerName: string;
-    soundEnabled: boolean;
-    trophies: TrophyCollection;
-    stats: Record<GameId, GameStats>;
-    savedGames?: Partial<Record<GameId, string>>; // e.g., { chess: 'fen_string' }
-    gameHistory: GameHistoryEntry[];
-}
-
-export interface AuthContextType {
-    user: User | null;
-    allUsers: User[];
-    login: (email: string, password: string) => boolean;
-    logout: () => void;
-    updateUserStats: (gameId: GameId, result: 'win' | 'loss' | 'draw', timePlayed: number) => void;
-    isAuthModalOpen: boolean;
-    setAuthModalOpen: (isOpen: boolean) => void;
-    updatePlayerName: (newName: string) => void;
-    deleteAccount: () => void;
-    toggleSound: () => void;
-    saveGame: (gameId: GameId, gameState: string) => void;
-    clearSavedGame: (gameId: GameId) => void;
-}
-
-export interface AudioContextType {
-    playLobbyMusic: () => void;
-    playGameMusic: () => void;
-    stopMusic: () => void;
-    userHasInteracted: boolean;
-    setUserHasInteracted: (interacted: boolean) => void;
+    turns: number;
+    durationSeconds: number;
+    moveHistorySummary?: string[];
+  }>;
 }
